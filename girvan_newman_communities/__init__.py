@@ -97,8 +97,8 @@ def phase1(graph):
 
             # put node in the community
             if best_com != old_community:
-                print("Moving node {} from communmity {} to community {}"\
-                      .format(node, old_community, best_com))
+                #print("Moving node {} from communmity {} to community {}"\
+                #      .format(node, old_community, best_com))
                 was_changed_local = True
                 was_changed_global = True
 
@@ -109,46 +109,20 @@ def phase1(graph):
                 communities.pop(old_community, None)
     return was_changed_global, communities
 
-def old_phase1():
-    # S[i,c] = 1 if node i belongs to community c else 0
-    counter = 0
-    wasChangedInFunction = False
-    wasChangedInLoop = True
-    while wasChangedInLoop:
-        wasChangedInLoop = False
-        #print('    phase1 counter: %d' % counter)
-        counter+=1
+def phase2(graph, communities):
+    """
+    Build a new graph whose nodes are now communities found during the first phase
+    I.e. squashes nodes in a community into a single node, and preserve edges, so that
+    edges between nodes in a community become loops, and edges between nodes in two different
+    communities become edges between the community-nodes.
+    """
 
-        # loop over each node
-        # this for loop takes fooooorever
-        for i, S_row in enumerate(self.S):
-            cur_community = best_community = np.nonzero(S_row)[0][0]
-
-            # remove node from its former community
-            self.S[i, cur_community] = 0
-
-            best_delta_Q = self.delta_modularity(i, cur_community)
-
-            # find best delta Q for all other communities
-            for j, _ in enumerate(S_row):
-                delta_Q = self.delta_modularity(i, j)
-                if delta_Q > best_delta_Q:
-                    best_delta_Q = delta_Q
-                    best_community = j
-            if cur_community != best_community:
-                wasChangedInLoop= True
-                wasChangedInFunction= True
-            self.S[i, best_community] = 1
-
-    # remove columns that are all zeros via a mask
-    # this removes irrelevant communities
-    self.S = np.transpose(self.S)
-    self.S = np.transpose(self.S[(self.S!=0).any(axis=1)])
-    return wasChangedInFunction
-
-
-def phase2():
-    return None
+    ret_graph = nx.MultiGraph()
+    ret_graph.add_nodes_from(communities.keys())
+    which_community = {val: key for key, value in communities.items() for val in value}
+    for n1, n2 in graph.edges_iter():
+        ret_graph.add_edge(which_community[n1], which_community[n2])
+    return ret_graph
 
 def get_communities(graph):
     """
@@ -163,6 +137,5 @@ def get_communities(graph):
             break
         phase2()
 
-    #communities = copy.deepcopy(node_comm_associations)
     communities = []
     return communities
