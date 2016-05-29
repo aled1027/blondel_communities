@@ -2,6 +2,7 @@ from __future__ import (absolute_import, division, print_function, unicode_liter
 import copy
 import numpy as np
 import networkx as nx
+from pprint import pprint
 
 def merge_nodes(graph, merge_set, new_node):
     """
@@ -29,6 +30,7 @@ def delta_modularity(graph, communities, node, community):
     """
     The change in modularity from moving isolated node node in community community.
     For best communities, want to maximize modularity.
+    Q is another name for modularity.
 
     delta_Q = [((sigma_in + k_i_in)/(2*m)) - ((sigma_tot + k_i)/ (2 * m))^2
             - [(sigma_in / 2 * m) - (sigma_tot / 2 * m)^2 - (k_i / 2 * m)^2]
@@ -58,16 +60,54 @@ def delta_modularity(graph, communities, node, community):
 
     return delta_q
 
-def number_self_loops(graph, node):
-    """returns number of self loops of node"""
-    return graph.number_of_edges(node, node)
-
 def phase1(graph):
-    was_changed = False
-    for node in graph.nodes_iter():
-        for nbr in graph.neighbors_iter(node):
-            pass
-    return was_changed
+    """Performs phase 1 of algorithm
+    Loops over each node
+        Loops over each neighbor
+            Find delta_mod of moving node into nbr's community
+        Move node into that community
+    """
+
+    # initialize each node to its own community
+    communities = {i: [node] for i, node in enumerate(graph.nodes_iter())}
+    which_community = {val: key for key, value in communities.items() for val in value}
+    was_changed_global = False
+    was_changed_local = True
+
+    # Continue loop until no nodes change their community
+    while was_changed_local:
+        was_changed_local = False
+        for node in graph.nodes_iter():
+
+            # Isolate node, use current community as baseline for comparison
+            old_community = which_community[node]
+            communities[old_community].remove(node)
+            best_delta = delta_modularity(graph, communities, node, old_community)
+            best_com = old_community
+
+            # Loop through neighbors to find best community (if better than old one)
+            for nbr in graph.neighbors_iter(node):
+                if nbr == node or node in communities[which_community[nbr]]:
+                    continue
+                # compute delta_mod of node putting node into nbr's community
+                delta_q = delta_modularity(graph, communities, node, which_community[nbr])
+                if best_delta < delta_q:
+                    best_delta = delta_q
+                    best_com = which_community[nbr]
+
+            # put node in the community
+            if best_com != old_community:
+                print("Moving node {} from communmity {} to community {}"\
+                      .format(node, old_community, best_com))
+                was_changed_local = True
+                was_changed_global = True
+
+            # Update community and which_community data-structures
+            which_community[node] = best_com
+            communities[best_com].append(node)
+            if not communities[old_community]:
+                communities.pop(old_community, None)
+    return was_changed_global, communities
 
 def old_phase1():
     # S[i,c] = 1 if node i belongs to community c else 0
