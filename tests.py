@@ -2,7 +2,7 @@ from __future__ import print_function
 
 import unittest
 import networkx as nx
-import girvan_newman_communities as co
+import blondel_communities as co
 import matplotlib.pyplot as plt
 from pprint import pprint
 
