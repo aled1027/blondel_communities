@@ -27,25 +27,36 @@ def merge_nodes(graph, merge_set, new_node):
 
 def delta_modularity(graph, communities, node, community):
     """
-    formula:
-    sum over all nodes j in community
-    (1/num_stubs) * (2 * (A_ij - (k_i * k_j) / num_stubs) + (A_ii - (k_i*k_i)/num_stubs))
+    The change in modularity from moving isolated node node in community community.
+    For best communities, want to maximize modularity.
 
-    returns the value of adding node_i to community
-    simply multiply the value by negative 1 to get the value
-    of removing node i from the community
+    delta_Q = [((sigma_in + k_i_in)/(2*m)) - ((sigma_tot + k_i)/ (2 * m))^2
+            - [(sigma_in / 2 * m) - (sigma_tot / 2 * m)^2 - (k_i / 2 * m)^2]
+
+    sigma_in = sum of weights of edges inside community
+    sigma_tot = sum of weights of edges indicident to nodes in C
+    k_i = sum of weights of edges incident to node
+    k_i_in = sum of weights of edges between node and community members
+    m = sum of all weights in network
     """
 
-    ret_val = 0
-    # (2 * (A_ij - (k_i * k_j) / num_stubs)
-
-    A_ij = sum(graph.number_of_edges(com_node) for com_node in communities[community])
-    k_i_in  = sum(graph.number_of_edges(node, come_node) for com_node in communities[community])
+    # Can make assumption that node is not in target community
+    assert(node not in communities[community])
+    m = graph.number_of_edges()
+    sigma_in = graph.subgraph(communities[community]).number_of_edges()
+    sigma_tot = sigma_in + sum(graph.number_of_edges(com_node, nbr) \
+            for com_node in communities[community] \
+            for nbr in graph.neighbors_iter(com_node) \
+            if nbr not in communities[community])
+    a_ij = sum(graph.number_of_edges(com_node) for com_node in communities[community])
+    k_i_in  = sum(graph.number_of_edges(node, com_node) for com_node in communities[community])
     k_i = graph.degree(node)
-    return 0
 
+    delta_q_left = (((sigma_in + k_i_in) / (2 * m)) - ((sigma_tot + k_i) / (2 * m))**2)
+    delta_q_right = (sigma_in / (2 * m)) - ((sigma_tot / (2 * m))**2) - ((k_i / (2 * m))**2)
+    delta_q = delta_q_left - delta_q_right
 
-
+    return delta_q
 
 def number_self_loops(graph, node):
     """returns number of self loops of node"""
