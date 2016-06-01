@@ -36,11 +36,10 @@ class TestStringMethods(unittest.TestCase):
         self.assertGreater(delta_mod, 0.06)
         self.assertLess(delta_mod, 0.063)
 
-    def test_karate_phase1(self):
+    def test_karate(self):
         graph = get_karate_graph()
-        was_changed, communities = co.phase1(graph)
-        self.assertTrue(was_changed)
-        # TODO add an assert on communities
+        communities = co.get_communities(graph)
+        self.assertEqual(len(communities), 4)
 
     def test_wiki_phase1(self):
         graph = get_wiki_graph()
@@ -62,8 +61,7 @@ class TestStringMethods(unittest.TestCase):
     def test_wiki_comm(self):
         graph = get_wiki_graph()
         communities = co.get_communities(graph)
-        # TODO finish
-        print(communities)
+        # TODO add assert
 
 if __name__ == '__main__':
     unittest.main()

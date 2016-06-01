@@ -10,28 +10,6 @@ This module computes the communities of a graph.
 from __future__ import (absolute_import, division, print_function, unicode_literals)
 import networkx as nx
 
-def merge_nodes(graph, merge_set, new_node):
-    """
-    Squashes all nodes in merge_set into a node called new_node
-    Works for digraphs where all edges go in both directs,
-    because that works best for PathLinker
-    """
-    graph.add_node(new_node)
-    for node in merge_set:
-        for edge in graph.edges(node):
-            if edge[0] == node:
-                graph.add_edge(new_node, edge[1])
-                graph.add_edge(edge[1], new_node)
-            elif edge[1] == node:
-                graph.add_edge(edge[0], new_node)
-                graph.add_edge(new_node, edge[0])
-
-    # remove merge_set nodes
-    for node in merge_set:
-        if node in graph.nodes():
-            graph.remove_node(node)
-    return graph
-
 def delta_modularity(graph, communities, node, community):
     """
     The change in modularity from moving isolated node node in community community.
@@ -97,6 +75,7 @@ def phase1(graph):
             # Loop through neighbors to find best community (if better than old one)
             for nbr in graph.neighbors_iter(node):
                 if nbr == node or node in communities[which_community[nbr]]:
+                    # TODO does this line ever get hit?
                     continue
                 # compute delta_mod of node putting node into nbr's community
                 delta_q = delta_modularity(graph, communities, node, which_community[nbr])

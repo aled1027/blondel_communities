@@ -14,7 +14,10 @@ An implementation of Blondel et al.'s community detection algorithm.
     - I think it should be
 
 ## Tests
-- Run `python tests/tests.py`
+- tests: `python tests/tests.py`
+- coverage:
+    - `coverage run tests/tests.py`
+    - `coverage report -m`
 
 
 ## Longe term
@@ -23,3 +26,4 @@ An implementation of Blondel et al.'s community detection algorithm.
 ## Resources
 - https://github.com/grantjenks/sorted_containers
 - https://github.com/kennethreitz/requests
+
