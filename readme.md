@@ -8,6 +8,14 @@ An implementation of Blondel et al.'s community detection algorithm.
 - Conform to nx doc style
 - Add examples
     - Use karate graph and other builtins
+- add coverage.py
+- run pylint
+- check error: wiki node 10 is not being put into a community
+    - I think it should be
+
+## Tests
+- Run `python tests/tests.py`
+
 
 ## Longe term
 - See if nx is interested

@@ -75,7 +75,10 @@ def phase1(graph):
     was_changed_local = True
 
     # Continue loop until no nodes change their community
-    while was_changed_local:
+    max_iters = nx.number_of_nodes(graph)
+    i = 0
+    while was_changed_local and i < max_iters:
+        i += 1
         was_changed_local = False
         for node in graph.nodes_iter():
 
@@ -83,6 +86,7 @@ def phase1(graph):
             old_community = which_community[node]
             communities[old_community].remove(node)
             best_delta = delta_modularity(graph, communities, node, old_community)
+            i = 0
             best_com = old_community
 
             # Loop through neighbors to find best community (if better than old one)
@@ -130,12 +134,28 @@ def get_communities(graph):
     Alternates between phase1 and phase2 until the graph goes unchanged.
     """
 
-    communities = None
+    # node representation keeps track of which nodes have been squished into communities
+    # So if nodes 1 and 2 are squashed into community 3, then node_repr = {3: [1,2]}
+    node_repr = {node: [node] for node in graph.nodes_iter()}
     while True:
-        was_changed = phase1()
+        was_changed, communities = phase1(graph)
+        # break if no nodes moved communities in phase1
         if was_changed == False:
             break
-        phase2()
 
-    communities = []
-    return communities
+        # update node_repr based on the received communities
+        # essentially, we map over the values of the communities, transforming
+        # each "node" into the actual nodes that it represents
+        # TODO improve and clean this up
+        new_node_repr = communities
+        for com, nodes in new_node_repr.items():
+            temp_list = []
+            for node in nodes:
+                temp_list.extend(node_repr[node])
+            new_node_repr[com] = temp_list
+        node_repr = new_node_repr
+
+        # otherwise run phase 2
+        graph = phase2(graph, communities)
+
+    return node_repr.values()
