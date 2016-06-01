@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 
 def get_karate_graph():
     graph = nx.karate_club_graph()
-    graph = nx.MultiGraph(graph)
     return graph
 
 def get_wiki_graph():
@@ -26,7 +25,7 @@ def get_wiki_graph():
                 9:  [7,8],
                 10: [1,4,7],
                 }
-    graph = nx.MultiGraph(wiki_adj_dict)
+    graph = nx.Graph(wiki_adj_dict)
     return graph
 
 class TestStringMethods(unittest.TestCase):
@@ -65,7 +64,6 @@ class TestStringMethods(unittest.TestCase):
         communities = co.get_communities(graph)
         # TODO finish
         print(communities)
-
 
 if __name__ == '__main__':
     unittest.main()

@@ -19,3 +19,7 @@ An implementation of Blondel et al.'s community detection algorithm.
 
 ## Longe term
 - See if nx is interested
+
+## Resources
+- https://github.com/grantjenks/sorted_containers
+- https://github.com/kennethreitz/requests
