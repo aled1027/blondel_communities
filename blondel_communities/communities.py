@@ -24,19 +24,25 @@ def delta_modularity(graph, communities, node, community):
     k_i = sum of weights of edges incident to node
     k_i_in = sum of weights of edges between node and community members
     m = sum of all weights in network
+
+    TODO can remove communities and community from arguments, and just have community as list of nodes in target community.
     """
 
     # Can make assumption that node is not in target community
-    assert node not in communities[community]
+    #assert node not in communities[community]
     m = graph.number_of_edges()
     sigma_in = graph.subgraph(communities[community]).number_of_edges()
-    sigma_tot = sigma_in + sum(graph.number_of_edges(com_node, nbr) \
-            for com_node in communities[community] \
-            for nbr in graph.neighbors_iter(com_node) \
-            if nbr not in communities[community])
+
+    sigma_tot = sigma_in + \
+                sum(
+                    graph.number_of_edges(com_node, nbr) \
+                    for com_node in communities[community] \
+                    for nbr in graph.neighbors_iter(com_node) \
+                    if nbr not in communities[community]
+                )
+
     k_i_in = sum(graph.number_of_edges(node, com_node) for com_node in communities[community])
     k_i = graph.degree(node)
-
     delta_q_left = (((sigma_in + k_i_in) / (2 * m)) - ((sigma_tot + k_i) / (2 * m))**2)
     delta_q_right = (sigma_in / (2 * m)) - ((sigma_tot / (2 * m))**2) - ((k_i / (2 * m))**2)
     delta_q = delta_q_left - delta_q_right
@@ -52,41 +58,36 @@ def phase1(graph):
     """
 
     # initialize each node to its own community
-    communities = {i: [node] for i, node in enumerate(graph.nodes_iter())}
+    communities = {i: [node] for i, node in enumerate(graph)}
     which_community = {val: key for key, value in communities.items() for val in value}
     was_changed_global = False
     was_changed_local = True
 
     # Continue loop until no nodes change their community
     max_iters = nx.number_of_nodes(graph)
-    i = 0
-    while was_changed_local and i < max_iters:
-        i += 1
+    counter = 0
+    while was_changed_local and counter < max_iters:
+        counter += 1
         was_changed_local = False
-        for node in graph.nodes_iter():
-
-            # Isolate node, use current community as baseline for comparison
-            old_community = which_community[node]
-            communities[old_community].remove(node)
-            best_delta = delta_modularity(graph, communities, node, old_community)
-            i = 0
-            best_com = old_community
+        for node in graph:
+            # use current community as baseline for comparison
+            best_com = old_community = which_community[node]
+            best_delta = -1 * delta_modularity(graph, communities, node, old_community)
+            communities[old_community].remove(node) # isolate node
 
             # Loop through neighbors to find best community (if better than old one)
             for nbr in graph.neighbors_iter(node):
                 if nbr == node or node in communities[which_community[nbr]]:
-                    # TODO does this line ever get hit?
                     continue
-                # compute delta_mod of node putting node into nbr's community
+
+                # compute change in modularity of putting node into nbr's community
                 delta_q = delta_modularity(graph, communities, node, which_community[nbr])
-                if best_delta < delta_q:
+                if delta_q > best_delta:
                     best_delta = delta_q
                     best_com = which_community[nbr]
 
-            # put node in the community
+            # put node into best community
             if best_com != old_community:
-                #print("Moving node {} from communmity {} to community {}"\
-                #      .format(node, old_community, best_com))
                 was_changed_local = True
                 was_changed_global = True
 
@@ -114,8 +115,18 @@ def phase2(graph, communities):
 
 def get_communities(graph):
     """
-    Main function of package.
-    Alternates between phase1 and phase2 until the graph goes unchanged.
+    Returns the communities of the graph by running the Blondel et al. algorithm.
+
+    In summary, alternates between phase1 and phase2 until the graph goes unchanged.
+
+    Parameters
+    ----------
+    graph : networkx Graph
+        Graph to find communities of
+    Returns
+    -------
+    communities : list
+        A list of lists. Each sublist is a list of nodes which part of a community.
     """
     # TODO improve and clean this up
 
@@ -124,7 +135,7 @@ def get_communities(graph):
 
     # node representation keeps track of which nodes have been squished into communities
     # So if nodes 1 and 2 are squashed into community 3, then com_node_dict = {3: [1,2]}
-    com_node_dict = {node: [node] for node in graph.nodes_iter()}
+    com_node_dict = {node: [node] for node in graph}
     while True:
         was_changed, communities = phase1(graph)
 
@@ -137,9 +148,10 @@ def get_communities(graph):
         # each "node" into the actual nodes that it represents
         _flatten = lambda li: [item for sublist in li for item in sublist]
         _update = lambda node: com_node_dict[node]
-        com_node_dict = {com: _flatten(map(_update, nodes)) for com, nodes in communities.items()}
+        com_node_dict = {com: _flatten(map(_update, nodes))\
+                for com, nodes in communities.items()}
 
         # run phase2 and loop
         graph = phase2(graph, communities)
 
-    return com_node_dict.values()
+    return list(com_node_dict.values())

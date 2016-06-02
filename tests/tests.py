@@ -3,10 +3,10 @@ from __future__ import print_function
 import unittest
 from pprint import pprint
 import sys
-
-import networkx as nx
-import blondel_communities as co
 import matplotlib.pyplot as plt
+import networkx as nx
+
+import blondel_communities as co
 
 def get_karate_graph():
     graph = nx.karate_club_graph()
@@ -39,14 +39,13 @@ class TestStringMethods(unittest.TestCase):
     def test_karate(self):
         graph = get_karate_graph()
         communities = co.get_communities(graph)
-        self.assertEqual(len(communities), 4)
 
     def test_wiki_phase1(self):
         graph = get_wiki_graph()
         was_changed, communities = co.phase1(graph)
         self.assertTrue(was_changed)
 
-        phase1_communities = {1: [10], 2:[1,2,3], 5: [4,5,6], 8: [7,8,9]}
+        phase1_communities = {2:[1,2,3], 5: [4,5,6], 8: [7,8,9], 9: [10]}
         self.assertEqual(communities, phase1_communities)
 
     def test_wiki_phase2(self):
@@ -61,7 +60,8 @@ class TestStringMethods(unittest.TestCase):
     def test_wiki_comm(self):
         graph = get_wiki_graph()
         communities = co.get_communities(graph)
-        # TODO add assert
+        ideal_communities = [[7,8,9], [10], [1,2,3], [4,5,6]]
+        self.assertEqual(communities, ideal_communities)
 
 if __name__ == '__main__':
     unittest.main()
